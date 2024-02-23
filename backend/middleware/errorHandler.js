@@ -1,8 +1,9 @@
 exports.errorHandlerMiddleWare = (err, req, res, next) => {
 
-    err.message = err.message || "Server error!";
+    err.message = err.message || "Internal Server error!";
     err.statusCode = err.statusCode || 500
 
+    console.log(err.statusCode)
     // Mongoose duplicate key error
     if (err.code === 11000) {
         err.message = `Duplicate ${Object.keys(err.keyValue)} Entered`;;
@@ -13,7 +14,7 @@ exports.errorHandlerMiddleWare = (err, req, res, next) => {
     if (err.name === "CastError") {
         err.message = `Resource not found. Invalid: ${err.path}`;
         err.statusCode = 400;
-    }
+    } 
 
     // Wrong JWT error
     if (err.name === "JsonWebTokenError") {
@@ -24,12 +25,12 @@ exports.errorHandlerMiddleWare = (err, req, res, next) => {
     // JWT EXPIRE error
     if (err.name === "TokenExpiredError") {
         err.message = `Json Web Token is Expired, Try again `;
-        err.statusCode = 400;
+        err.statusCode = 401;
     }
     
-    res.status(err.statusCode).json({
+    return res.status(err.statusCode).json({
         success: false,
-        message: err.message
+        message: err.message,
     })
 
 }

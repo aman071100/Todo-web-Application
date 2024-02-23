@@ -1,18 +1,19 @@
 const { catchAsyncFun } = require("../middleware/asyncFun")
 const Contact = require("../modals/contact");
+const { AllHttpCode } = require("../utils/allStatusCode");
 const uploadClodinary = require("../utils/cloudinary");
-const errorHandler = require("../utils/errorCustomClass");
+const ErrorHandler = require("../utils/errorCustomClass");
 // ADD NEW CONTACT DATA
 // POST METHOD
 
-exports.createContact = catchAsyncFun(async (req, res, next)=>{
-    const {name, phone, email} = req.body;
+exports.createContact = catchAsyncFun(async (req, res, next) => {
+    const { name, phone, email, address } = req.body;
 
-    if( !name || !phone || !email){
-        return next(new errorHandler("All fields are required!"));
+    if (!name || !phone || !email || !address) {
+        return next(new ErrorHandler("All fields are required!", AllHttpCode.All_Fields_Required));
     }
 
-     const profileImg = req.files?.image[0]?.path;
+    const profileImg = req.files?.image[0]?.path;
 
     const uplaodedImage = await uploadClodinary(profileImg);
 
@@ -20,26 +21,31 @@ exports.createContact = catchAsyncFun(async (req, res, next)=>{
         name,
         email,
         phone,
-        image : uplaodedImage.url
+        address,
+        image: uplaodedImage.url
     });
 
     res.status(200).json({
-        success : true,
-        message : "Contact created successfully."
+        success: true,
+        message: "Contact created successfully."
     })
 });
 
-exports.getContact = catchAsyncFun(async (req, res, next)=>{
+exports.getContact = catchAsyncFun(async (req, res, next) => {
 
     const contact = await Contact.findById(req.params.id);
 
+    if (!contact) {
+        return next(new ErrorHandler("Not Found", AllHttpCode.Not_Found))
+    }
+
     res.status(200).json({
-        success : true,
-        data : contact
+        success: true,
+        data: contact
     })
 });
 
-exports.getContacts = catchAsyncFun(async (req, res, next)=>{
+exports.getContacts = catchAsyncFun(async (req, res, next) => {
 
     const { name } = req.query;
     let query = {};
@@ -49,46 +55,55 @@ exports.getContacts = catchAsyncFun(async (req, res, next)=>{
         // If provided, use it to filter the query
         query = { name: { $regex: new RegExp(name, 'i') } };
     }
-    
+
     // Use the query to find contacts
     const contacts = await Contact.find(query);
-
-    res.status(200).json({
-        success : true,
-        data : contacts
-    })
-});
-
-exports.UpdateContact = catchAsyncFun(async (req, res, next)=>{
-    const {name, phone, email} = req.body;
-
-    if( !name || !phone || !email){
-        return next(new errorHandler("All fields are required!"));
+    if (!contacts) {
+        return next(new ErrorHandler("Not Found", AllHttpCode.Not_Found))
     }
-
-    const profileImg = req.files?.image[0]?.path;
-
-    const uplaodedImage = await uploadClodinary(profileImg);
-
-    const contact = await Contact.findByIdAndUpdate(req.params.id, {
-        name,
-        email,
-        phone,
-        image : uplaodedImage.url
-    });
-
     res.status(200).json({
-        success : true,
-        message : "Contact updated successfully."
+        success: true,
+        data: contacts
     })
 });
 
-exports.deleteContact = catchAsyncFun(async (req, res, next)=>{
+exports.UpdateContact = catchAsyncFun(async (req, res, next) => {
+    const { name, phone, email, address } = req.body;
 
-    const contact = await Contact.deleteOne({"_id" : req.params.id});
+    if (!name || !phone || !email || !address) {
+        return next(new ErrorHandler("All fields are required!", AllHttpCode.All_Fields_Required));
+    }
+    
+    if(req?.files?.image && req?.files?.image[0] !== undefined){
+        const profileImg = req?.files?.image[0]?.path;
+        const uplaodedImage = await uploadClodinary(profileImg);
+        const contact = await Contact.findByIdAndUpdate(req.params.id, {
+            name,
+            email,
+            phone,
+            address,
+            image: uplaodedImage.url
+        });
+        }else{
+            const contact = await Contact.findByIdAndUpdate(req.params.id, {
+                name,
+                email,
+                phone,
+                address,
+            });
+        }
+    res.status(200).json({
+        success: true,
+        message: "Contact updated successfully."
+    })
+});
+
+exports.deleteContact = catchAsyncFun(async (req, res, next) => {
+
+    const contact = await Contact.deleteOne({ "_id": req.params.id });
 
     res.status(200).json({
-        success : true,
-        message : "Contact deleted successfully."
+        success: true,
+        message: "Contact deleted successfully."
     })
 });

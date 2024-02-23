@@ -3,10 +3,7 @@ const { createUser, loginUser, forgotPassword, resetPassword } = require("../con
 const { upload } = require("../middleware/multer");
 const router = express.Router();
 
-router.post("/register", upload.fields([{
-    name : 'avatar',
-    maxCount:1
-}]), createUser);
+router.post("/register", createUser);
 
 router.post("/login", loginUser);
 

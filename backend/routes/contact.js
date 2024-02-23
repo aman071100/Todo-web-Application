@@ -11,7 +11,7 @@ router.post("/create", isAuthenticated, upload.fields([{
 
 router.get("/getAll", isAuthenticated, getContacts);
 router.get("/getContact/:id",isAuthenticated, getContact)
-router.patch("/updateContact/:id",isAuthenticated,upload.fields([{
+router.patch("/updateContact/:id", isAuthenticated, upload.fields([{
     name: 'image',
     maxCount: 1
 }]), UpdateContact)
